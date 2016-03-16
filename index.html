@@ -81,7 +81,7 @@
 
     </head>
 
-    <body style="min-height:100%; overflow:hidden">
+    <body style="min-height:100%; overflow:hidden; width:1600px">
 
         <div id="wrapper">
 
@@ -126,19 +126,22 @@
                                     </p>
                                     <fieldset id="controls" disabled hidden>
                                         <div class="row">
-                                            <div class="span2 col-lg-7">
+                                            <div class="span2 col-lg-5">
                                                 <p>
                                                     Take picture every
                                                     <input class="form-control" id="rateTxt" type="text" value="5" maxlength="2" style="width:3em;margin:0 0 0 0;display: inline-block;">
                                                     seconds
                                                 </p>
                                             </div>
-                                            <div class="span2 col-lg-5">
+                                            <div class="span2 col-lg-4">
                                                 <input type="text" style="max-width: 100%" id="rateSlider" data-slider-id="slider" class="span2" value="" data-slider-min="1" data-slider-max="20" data-slider-step="1" data-slider-value="5" data-slider-orientation="horizontal" data-slider-selection="after">
+                                            </div>
+                                            <div class="span2 col-lg-2">
+                                                <button id="ratebutton" type="button" class="btn btn-primary">update</button>
                                             </div>
                                         </div>
                                         <p>
-                                            <button id="ratebutton" type="button" class="col-lg-4 btn btn-lg btn-primary">update</button>
+                                            <button id="picturebutton" type="button" class="col-lg-4 btn btn-lg btn-primary">Take Picture</button>
                                             <button id="recallbutton" type="button" class="col-lg-4 btn btn-lg btn-warning">Send Home</button>
                                             <button id="killbutton" type="button" class="col-lg-4 btn btn-lg btn-danger">Kill Drone</button>
                                         </p>
@@ -157,10 +160,14 @@
                         <div class="panel panel-default">
                             <div class="panel-heading">
                                 Last Picture
+                                <p style="float:right">
+                                    <label for="autoupdate" style="font-size:0.8em"> Auto Update </label>
+                                    <input id="autoupdate" type="checkbox" name="Auto Update" text="Auto Update" checked/>
+                                </p>
                             </div>
                             <!-- /.panel-heading -->
                             <div class="panel-body">
-                                <div class="col-lg-12"><img id="lastpicture" src="/dronolab/img2/1334974284.jpg" style="max-width: 100%"></div>
+                                <div class="col-lg-12"><img id="lastpicture" src="/img/1334973309.jpg" style="max-width: 100%"></div>
                             </div>
                             <!-- /.panel-body -->
                         </div>
@@ -198,6 +205,7 @@
 
 
         <script type="text/javascript">
+
             $(document).ready(function(){
                 $("#masterbutton").click(function(){
                     if (confirm('You are about to claim the master role. Continue?')) {
@@ -217,8 +225,8 @@
                     }
                 });
 
-                $("#killbutton").click(function(){
-                    if (confirm('Tou are about to recall the drone to the starting point. Continue?')) {
+                $("#recallbutton").click(function(){
+                    if (confirm('You are about to recall the drone to the starting point. Continue?')) {
                         //KILL DRONE
                     }
                 });
@@ -230,6 +238,13 @@
 
                 $('#rateSlider').slider("disable")
 
+                $('#rateTxt').bind("change keyup paste", function(ev){
+                            var val = $('#rateTxt').val();
+                            val = Math.floor(val);
+                            if(val >= 1 && val <= 20)
+                                $('#rateSlider').slider("setValue",val);
+                        });
+
                 var imagesArray = new Array()
 
                 var loadPictures = function(){
@@ -239,9 +254,18 @@
                         success: function (data) {
                             $(data).find("a").attr("href", function (i, val) {
                                 if( $.inArray(val, imagesArray) < 0 && val.match(/\.(jpe?g|png|gif)$/) ) { 
-                                    $("#pictureFeed").prepend( "<li><a class='thumbnail' href='#''><img src='"+ val +"'/></a></li>" );
+
+                                    var newsfeedImg = $("<li><a class='thumbnail' href='#'><img src='"+ folder +"/"+ val +"'/></a></li>")
+                                    newsfeedImg.click(function(){
+                                        $("#lastpicture").prop( "src", folder +"/"+ val );
+                                    });
+
+                                    $("#pictureFeed").prepend( newsfeedImg );
                                     imagesArray.push(val);
-                                    $("#lastpicture").prop( "src", val);
+                                    if ($("#autoupdate").prop('checked')) 
+                                    {
+                                        $("#lastpicture").prop( "src", folder +"/"+ val);
+                                    }
                                     if ( $('#pictureFeed li').length > 10 ) {
                                         $('#pictureFeed li').last().remove();
                                     }
@@ -250,7 +274,17 @@
                         }
                     });
                 }
+
                 setInterval(loadPictures,500);
+
+                $("#autoupdate").click(function(){
+                    if ($("#autoupdate").prop('checked')) 
+                    {
+                        pictureLoadInterval = setInterval(loadPictures,500);
+                    } else {
+                        clearInterval(pictureLoadInterval);
+                    }
+                });
             });
         </script>
 
